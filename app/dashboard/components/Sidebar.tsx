@@ -5,7 +5,7 @@ import { BiUser } from "react-icons/bi";
 import { GoHome } from "react-icons/go";
 import { IoMdLogIn, IoMdLogOut } from "react-icons/io";
 import { PiCertificate } from "react-icons/pi";
-import { RiDashboard2Line } from "react-icons/ri";
+import { RiDashboard2Line, RiServiceLine } from "react-icons/ri";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
 import { LuPhone } from "react-icons/lu";
 import { LiaProjectDiagramSolid } from "react-icons/lia";
@@ -57,9 +57,14 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
             href={"/about"}
           />
           <SideItem
+            icon={RiServiceLine}
+            label="Services"
+            href={"/services"}
+          />
+          <SideItem
             icon={LiaProjectDiagramSolid}
             label="Projects"
-            href={"/crojects"}
+            href={"/projects"}
           />
           <SideItem
             icon={PiCertificate}

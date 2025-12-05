@@ -11,7 +11,16 @@ export default async function AboutPage() {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/about`, {
       cache: "no-store",
     });
-    if (!res.ok) throw new Error("Failed to fetch hero page information");
+    if (!res.ok) throw new Error("Failed to fetch about page information");
+    const json = await res.json();
+    return json.data;
+  }
+
+  async function getServiceInfo() {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/services`, {
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error("Failed to fetch services page information");
     const json = await res.json();
     return json.data;
   }
@@ -19,7 +28,11 @@ export default async function AboutPage() {
   const { bio, birthdate, phone, address, honors, study, hero } =
     await getAboutInfo();
 
-  const InfoItem = ({
+  console.log(bio, birthdate, phone, address, honors, study, hero);
+
+  const { servicesSummary, services } = await getServiceInfo();
+
+  function InfoItem({
     icon: Icon,
     color,
     title,
@@ -29,20 +42,22 @@ export default async function AboutPage() {
     color: string;
     title: string;
     value: string;
-  }) => (
-    <div className="flex items-center gap-3">
-      <div
-        className="flex items-center justify-center rounded-full h-9 w-9 shrink-0"
-        style={{ backgroundColor: color }}
-      >
-        <Icon className="text-white h-5 w-5" />
+  }) {
+    return (
+      <div className="flex items-center gap-3">
+        <div
+          className="flex items-center justify-center rounded-full h-9 w-9 shrink-0"
+          style={{ backgroundColor: color }}
+        >
+          <Icon className="text-white h-5 w-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h2 className="font-semibold truncate">{title}</h2>
+          <p className="text-sm text-gray-300 wrap-break-word">{value}</p>
+        </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <h2 className="font-semibold truncate">{title}</h2>
-        <p className="text-sm text-gray-300 wrap-break-word">{value}</p>
-      </div>
-    </div>
-  );
+    );
+  }
 
   const infoData = [
     {
@@ -87,7 +102,6 @@ export default async function AboutPage() {
     <>
       {/* bg-linear-to-b from-slate-900 via-slate-800 to-slate-900 */}
       <section className="relative overflow-hidden py-24 px-6 border text-white rounded-3xl shadow-xl">
-        {/* Background decoration */}
         {/* <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,0,0.15),transparent_60%)]"></div> */}
         {/* <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(255,255,0,0.1),transparent_60%)]"></div> */}
 
@@ -145,64 +159,27 @@ export default async function AboutPage() {
       <section>
         <h2 className="text-2xl font-bold my-6 text-center">My Services</h2>
         <p className="text-md text-center text-pretty max-w-3xl mx-auto">
-          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Similique
-          labore consequatur molestias eligendi nesciunt aut obcaecati deserunt
-          quam ea temporibus placeat maxime, nulla, pariatur atque repellat
-          illum. Ad velit a ipsum quis.
+          {servicesSummary}
         </p>
         <div className="my-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Card 1 */}
-          <SpotlightCard spotlightColor="oklch(85% 0.22 85)">
-            <h2 className="text-2xl font-bold text-yellow-400 mb-3 ">
-              Frontend Development
-            </h2>
-            <p className="text-sm text-gray-400 leading-relaxed">
-              Building dynamic, high-performance web applications using Focused
-              on creating fast, maintainable, and elegant UIs.
-            </p>
-          </SpotlightCard>
-
-          {/* Card 2 */}
-          <SpotlightCard
-            className="custom-spotlight-card"
-            spotlightColor="oklch(80% 0.2 250)" // cyan-blue
-          >
-            <h2 className="text-2xl font-bold text-sky-400 mb-3">
-              UI/UX Design & Animation
-            </h2>
-            <p className="text-sm text-gray-400 leading-relaxed">
-              Transforming concepts into intuitive experiences with value
-              minimalism, motion, and micro-interactions that feel alive.
-            </p>
-          </SpotlightCard>
-
-          {/* Card 3 */}
-          <SpotlightCard
-            className="custom-spotlight-card"
-            spotlightColor="oklch(80% 0.2 160)" // green
-          >
-            <h2 className="text-2xl font-bold text-emerald-400 mb-3">
-              Clean Architecture
-            </h2>
-            <p className="text-sm text-gray-400 leading-relaxed">
-              Writing maintainable, scalable front-end systems using , and a
-              modular folder structure. I aim for clarity, testability, and
-              long-term stability.
-            </p>
-          </SpotlightCard>
-
-          <SpotlightCard
-            className="custom-spotlight-card "
-            spotlightColor="oklch(85% 0.22 85)" // yellow-gold
-          >
-            <h2 className="text-2xl font-bold text-yellow-400 mb-3 ">
-              Frontend Development
-            </h2>
-            <p className="text-sm text-gray-400 leading-relaxed">
-              Building dynamic, high-performance web applications using Focused
-              on creating fast, maintainable, and elegant UIs.
-            </p>
-          </SpotlightCard>
+          {services.map(
+            (
+              item: { title: string; color: string; desc: string },
+              index: number
+            ) => (
+              <SpotlightCard key={index} spotlightColor={item.color}>
+                <h2
+                  className="text-2xl font-bold mb-3"
+                  style={{ color: item.color }}
+                >
+                  {item.title}
+                </h2>
+                <p className="text-sm text-gray-400 leading-relaxed">
+                  {item.desc}
+                </p>
+              </SpotlightCard>
+            )
+          )}
         </div>
       </section>
     </>

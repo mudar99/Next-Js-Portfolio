@@ -17,44 +17,19 @@ import { Label } from "@/components/ui/label";
 import { Plus, Trash2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/axios";
-
-/* -------------------- Types -------------------- */
-type Phrase = string;
-
-interface Stat {
-  value: string;
-  title: string;
-}
-
-interface Profession {
-  title: string;
-  image: File | string | null;
-}
-
-export interface HeroData {
-  id: number;
-  name: string;
-  profession: string;
-  emailLink: string;
-  skillsSummary: string;
-  image: File | string | null;
-  cvFile: File | string | null;
-  phrases: Phrase[];
-  stats: Stat[];
-  professions: Profession[];
-  createdAt?: string;
-  updatedAt?: string;
-}
+import { HeroType, heroSchema } from "@/app/schemas/hero.schema";
+import { objectToFormData } from "@/app/utils/objectToForm";
+import { toast } from "sonner";
 
 type Props = {
-  data: HeroData;
+  data: HeroType;
 };
 
 /* -------------------- Component -------------------- */
 export default function EditHeroDialog({ data }: Props) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState<HeroData>({
+  const [formData, setFormData] = useState<HeroType>({
     ...data,
     // normalize undefined -> null for file fields
     image: data.image ?? null,
@@ -66,10 +41,10 @@ export default function EditHeroDialog({ data }: Props) {
 
   /* -------- simple field handlers -------- */
   const setField = (
-    key: keyof Omit<HeroData, "phrases" | "stats" | "professions">,
+    key: keyof Omit<HeroType, "phrases" | "stats" | "professions">,
     value: string | File | null
   ) => {
-    setFormData((prev) => ({ ...prev, [key]: value } as HeroData));
+    setFormData((prev) => ({ ...prev, [key]: value } as HeroType));
   };
 
   const handleFileField = (
@@ -99,14 +74,14 @@ export default function EditHeroDialog({ data }: Props) {
   const addStat = () =>
     setFormData((p) => ({
       ...p,
-      stats: [...p.stats, { value: "", title: "" }],
+      stats: [...p.stats, { value: 0, title: "" }],
     }));
   const removeStat = (index: number) =>
     setFormData((p) => ({
       ...p,
       stats: p.stats.filter((_, i) => i !== index),
     }));
-  const updateStat = (index: number, field: keyof Stat, value: string) =>
+  const updateStat = (index: number, field: "value" | "title", value: string) =>
     setFormData((p) => {
       const copy = p.stats.map((s, i) =>
         i === index ? { ...s, [field]: value } : s
@@ -153,7 +128,7 @@ export default function EditHeroDialog({ data }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["hero"] });
-      console.log("✅ Hero updated successfully");
+      console.log("Hero section updated successfully");
     },
     onError: (err) => console.error("❌ Error sending", err),
   });
@@ -161,28 +136,25 @@ export default function EditHeroDialog({ data }: Props) {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const body = new FormData();
-    body.append("name", formData.name);
-    body.append("profession", formData.profession);
-    body.append("skillsSummary", formData.skillsSummary);
-    body.append("emailLink", formData.emailLink);
+    const parsed = heroSchema.safeParse(formData);
+    const form = objectToFormData(parsed.data);
 
-    if (formData.image) body.append("image", formData.image);
-    if (formData.cvFile) body.append("cvFile", formData.cvFile);
-
-    for (let i = 0; i < formData.stats.length; i++) {
-      body.append(`stats[${i}][title]`, formData.stats[i].title);
-      body.append(`stats[${i}][value]`, formData.stats[i].value);
-    }
-    for (let i = 0; i < formData.professions.length; i++) {
-      body.append(`professions[${i}][title]`, formData.professions[i].title);
-      body.append(`professions[${i}][image]`, formData.professions[i].image!);
-    }
-    for (let i = 0; i < formData.phrases.length; i++) {
-      body.append(`phrases[${i}]`, formData.phrases[i]);
+    if (parsed.error) {
+      console.log(parsed.error);
+      toast.error(
+        <ul className="list-disc pl-5">
+          {parsed.error.issues.map((err, idx) => (
+            <li key={idx}>
+              <strong>{err.path.join(".").toUpperCase()}:</strong> {err.message}
+            </li>
+          ))}
+        </ul>
+      );
+      setOpen(false);
+      return;
     }
 
-    mutation.mutate(body);
+    mutation.mutate(form);
     setOpen(false);
   };
 

@@ -7,40 +7,31 @@ import { axiosInstance } from "@/lib/axios";
 import { useQuery } from "@tanstack/react-query";
 import { MailIcon } from "lucide-react";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
-
-type Stat = { value: string; title: string };
-type Profession = { title: string; image: File | string | null };
-type Hero = {
-  id: number;
-  name: string;
-  profession: string;
-  emailLink: string;
-  skillsSummary: string;
-  image: File | string | null;
-  cvFile: File | string | null;
-  phrases: string[];
-  stats: Stat[];
-  professions: Profession[];
-  createdAt?: string;
-  updatedAt?: string;
-};
+import { HeroType, heroSchema } from "@/app/schemas/hero.schema";
 
 export default function HeroPage() {
   const {
     data: hero,
     isLoading,
     error,
-  } = useQuery<Hero>({
+  } = useQuery<HeroType>({
     queryKey: ["hero"],
     queryFn: async () => {
       const { data } = await axiosInstance.get("/hero");
-      console.log(data);
-      return data.data; // حسب شكل الريسبونس
+      const parsed = heroSchema.safeParse(data.data);
+
+      if (!parsed.success) {
+        console.error("❌ API returned invalid hero object", parsed.error);
+        throw new Error("Invalid hero data received from server");
+      }
+
+      return parsed.data;
     },
+    refetchOnWindowFocus: false,
   });
 
   if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error loading hero</div>;
+  if (error) return <div>{error.message}</div>;
 
   return (
     <section className="py-12 mt-15 px-6 rounded-2xl shadow-sm bg-card text-card-foreground w-full border">

@@ -8,7 +8,6 @@ import { GoHomeFill } from "react-icons/go";
 import { FaToggleOff, FaToggleOn } from "react-icons/fa6";
 import { FaExclamationCircle, FaProjectDiagram } from "react-icons/fa";
 import { PiCertificateFill } from "react-icons/pi";
-import { ImPhone } from "react-icons/im";
 
 const NavItem = ({
   href,
@@ -108,13 +107,6 @@ const Navbar = () => {
           onClick={() => setActivePath("/certificates")}
         />
 
-        <NavItem
-          icon={ImPhone}
-          href="/contact"
-          label="Contact"
-          active={activePath === "/skills"}
-          onClick={() => setActivePath("/skills")}
-        />
         <li
           className="py-2 px-4 rounded-md cursor-pointer transition"
           onClick={toggleTheme}
