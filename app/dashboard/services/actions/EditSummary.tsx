@@ -15,19 +15,19 @@ import { Label } from "@/components/ui/label";
 
 interface EditSummaryDialogProps {
   trigger: React.ReactNode;
-  summary: string;
+  servicesSummary: string;
   onUpdate: (text: string) => Promise<unknown> | void;
 }
 
 export default function EditSummary({
   trigger,
-  summary,
+  servicesSummary,
   onUpdate,
 }: EditSummaryDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const [text, setText] = useState(summary);
+  const [text, setText] = useState(servicesSummary);
 
   const handleSubmit = async () => {
     setLoading(true);

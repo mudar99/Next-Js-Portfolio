@@ -10,48 +10,41 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
+  // DialogClose,
 } from "@/components/ui/dialog";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { axiosInstance } from "@/lib/axios";
-import { aboutSchema, AboutType } from "@/app/schemas/about.schema";
-import { objectToFormData } from "@/app/utils/objectToForm";
-import { toast } from "sonner";
+// import { useMutation, useQueryClient } from "@tanstack/react-query";
+// import { axiosInstance } from "@/lib/axios";
+// import { aboutSchema, AboutType } from "@/app/schemas/about.schema";
+// import { objectToFormData } from "@/app/utils/objectToForm";
+// import { toast } from "sonner";
+import Image from "next/image";
+import { AboutType } from "@/app/schemas/about.schema";
 
-// interface EditAboutDialogProps {
-//   initialData: {
-//     id: number;
-//     bio: string;
-//     birthdate: string;
-//     phone: string;
-//     address: string;
-//     honors: string;
-//     study: string;
-//     image: File | string | null;
-//     heroId: string;
-//     hero: {
-//       name: string;
-//       emailLink: string;
-//       cvFile: string;
-//     };
-//     createdAt?: string;
-//     updatedAt?: string;
-//   };
-// }
+// type Props = {
+//   data: AboutType;
+// };
 
-type Props = {
+interface EditAboutDialogProps {
+  trigger: React.ReactNode;
   data: AboutType;
-};
+  onUpdate: (data: AboutType) => Promise<unknown> | void;
+}
 
-export default function EditAboutDialog({ data }: Props) {
+export default function EditAboutDialog({
+  trigger,
+  data,
+  onUpdate,
+}: EditAboutDialogProps) {
+  // export default function EditAboutDialog({ data }: Props) {
   const [formData, setFormData] = useState<AboutType>(data);
   const [open, setOpen] = useState(false);
-  const queryClient = useQueryClient();
+  const [loading, setLoading] = useState(false);
+  // const queryClient = useQueryClient();
 
   function handleChange(key: string, value: string | File | null | Date) {
     setFormData((prev) => ({
@@ -59,51 +52,62 @@ export default function EditAboutDialog({ data }: Props) {
       [key]: value,
     }));
   }
-  const mutation = useMutation({
-    mutationFn: async (body: FormData) => {
-      const res = await axiosInstance.put("/about", body);
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["about"] });
-      console.log("✅ About updated successfully");
-    },
-    onError: (err) => console.error("❌ Error sending", err),
-  });
+  // const mutation = useMutation({
+  //   mutationFn: async (body: FormData) => {
+  //     const res = await axiosInstance.put("/about", body);
+  //     return res.data;
+  //   },
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: ["about"] });
+  //     toast.success("About updated successfully");
+  //   },
+  //   onError: (err) => console.error("❌ Error sending", err),
+  // });
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    const parsed = aboutSchema.safeParse(formData);
-    // console.log(parsed);
-    const form = objectToFormData(parsed.data);
-    for (const value of form.values()) {
-      console.log(value);
-    }
-
-    if (parsed.error) {
-      toast.error(
-        <ul className="list-disc pl-5">
-          {parsed.error.issues.map((err, idx) => (
-            <li key={idx}>
-              <strong>{err.path.join(".").toUpperCase()}:</strong> {err.message}
-            </li>
-          ))}
-        </ul>
-      );
+    setLoading(true);
+    try {
+      await onUpdate(formData);
       setOpen(false);
-      return;
+    } catch (err) {
+      console.error(err);
     }
 
-    mutation.mutate(form);
-    setOpen(false);
+    setLoading(false);
   };
+
+  // const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  //   e.preventDefault();
+
+  //   const parsed = aboutSchema.safeParse(formData);
+  //   // console.log(parsed);
+  //   const form = objectToFormData(parsed.data);
+  //   for (const value of form.values()) {
+  //     console.log(value);
+  //   }
+
+  //   if (parsed.error) {
+  //     toast.error(
+  //       <ul className="list-disc pl-5">
+  //         {parsed.error.issues.map((err, idx) => (
+  //           <li key={idx}>
+  //             <strong>{err.path.join(".").toUpperCase()}:</strong> {err.message}
+  //           </li>
+  //         ))}
+  //       </ul>
+  //     );
+  //     setOpen(false);
+  //     return;
+  //   }
+
+  //   mutation.mutate(form);
+  //   setOpen(false);
+  // };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">Edit About</Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
 
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[800px]">
         <form onSubmit={handleSubmit} className="grid gap-6 p-2">
@@ -189,16 +193,17 @@ export default function EditAboutDialog({ data }: Props) {
             {formData.image && (
               <div className="mt-2">
                 {typeof formData.image === "string" ? (
-                  // existing image URL
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
+                    width={300}
+                    height={300}
                     src={process.env.NEXT_PUBLIC_FILE_API + formData.image}
                     alt="preview"
                     className="w-32 h-32 object-contain rounded-md"
                   />
                 ) : (
-                  // preview new uploaded file
-                  <img
+                  <Image
+                    width={300}
+                    height={300}
                     src={URL.createObjectURL(formData.image)}
                     alt="New file preview"
                     className="w-32 h-32 object-contain rounded-md"
@@ -209,10 +214,13 @@ export default function EditAboutDialog({ data }: Props) {
           </div>
 
           <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button type="submit">Save changes</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+
+            <Button type="submit" disabled={loading}>
+              {loading ? "Saving..." : "Save Changes"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

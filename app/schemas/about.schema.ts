@@ -1,9 +1,6 @@
 import { z } from "zod";
 import { validateImage } from "../utils/zodValidators";
 
-// ------------------------------
-// Main Schema
-// ------------------------------
 export const aboutSchema = z.object({
   bio: z.string().min(30, "Bio too short"),
   birthdate: z.coerce.date(),

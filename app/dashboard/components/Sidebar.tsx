@@ -56,11 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
             label="About"
             href={"/about"}
           />
-          <SideItem
-            icon={RiServiceLine}
-            label="Services"
-            href={"/services"}
-          />
+          <SideItem icon={RiServiceLine} label="Services" href={"/services"} />
           <SideItem
             icon={LiaProjectDiagramSolid}
             label="Projects"

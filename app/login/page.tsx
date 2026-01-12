@@ -1,7 +1,7 @@
 "use client";
-import React, { FormEvent, useState } from "react";
+
+import React from "react";
 import { useRouter } from "next/navigation";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
@@ -9,11 +9,30 @@ import { axiosInstance } from "@/lib/axios";
 import { AxiosError } from "axios";
 import { ApiResponse } from "@/types/api";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema, LoginType } from "../schemas/login.schema";
+import { objectToFormData } from "../utils/objectToForm";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormProviderWrapper,
+} from "@/components/ui/form";
 
 const Login = () => {
   const navigate = useRouter();
-  const [username, setUsername] = useState<string>();
-  const [password, setPassword] = useState<string>();
+
+  const methods = useForm<LoginType>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+  });
 
   const mutation = useMutation({
     mutationFn: async (payload: FormData) => {
@@ -22,7 +41,6 @@ const Login = () => {
         payload
       );
       console.log(res);
-      // نتحقق من success
       if (!res.data.status) {
         throw new Error(res.data.message || "Login failed");
       }
@@ -45,66 +63,73 @@ const Login = () => {
     },
   });
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append("username", username ?? "");
-    formData.append("password", password ?? "");
-
+  const onSubmit = (data: LoginType) => {
+    const formData = objectToFormData(data);
     mutation.mutate(formData);
   };
 
   return (
     <div className="relative flex items-center justify-center h-screen overflow-hidden">
-      <form
-        onSubmit={handleSubmit}
-        className="relative backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-2xl w-[380px] p-10 flex flex-col gap-6 text-white z-10"
-      >
-        <h2 className="text-3xl font-bold text-center mb-2 drop-shadow-md">
-          Control Panel ✨
-        </h2>
-
-        <p className="text-sm font-semibold text-center mb-2">
-          Log in to your control panel to update and manage your portfolio
-          content.
-        </p>
-
-        <div className="grid gap-2">
-          <Label htmlFor="username" className="text-sm text-gray-200">
-            Username
-          </Label>
-          <Input
-            id="username"
-            required
-            className="w-full px-3 py-2 rounded-md bg-white/10 border focus:outline-none focus:ring-2 focus:ring-pink-300 text-white placeholder:text-white border-ring"
-            placeholder="Enter your username"
-            onChange={(e) => setUsername(e.target.value)}
-          />
-        </div>
-
-        <div className="grid gap-2">
-          <Label htmlFor="password" className="text-sm text-gray-200">
-            Password
-          </Label>
-          <Input
-            type="password"
-            id="password"
-            required
-            className="w-full px-3 py-2 rounded-md bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-300 placeholder-gray-300 text-white"
-            placeholder="••••••••"
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-
-        <Button
-          type="submit"
-          className="mt-4 bg-white/20 hover:bg-white/30 transition-all py-2 rounded-md font-semibold backdrop-blur-md border border-white/30"
+      <FormProviderWrapper methods={methods}>
+        <Form
+          onSubmit={methods.handleSubmit(onSubmit)}
+          className="relative backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-2xl w-[380px] p-10 flex flex-col gap-6 text-white z-10"
         >
-          Login
-        </Button>
-      </form>
+          <h2 className="text-3xl font-bold text-center mb-2 drop-shadow-md">
+            Control Panel ✨
+          </h2>
 
-      {/* ضباب خلفي متحرك بلون ناعم */}
+          <p className="text-sm font-semibold text-center mb-2">
+            Log in to your control panel to update and manage your portfolio
+            content.
+          </p>
+
+          <FormField
+            name="username"
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <FormLabel htmlFor="username">Username</FormLabel>
+                <FormControl>
+                  <Input
+                    id="username"
+                    placeholder="Enter your username"
+                    {...field}
+                    className="bg-white/10 border-white/20 text-white"
+                  />
+                </FormControl>
+                <FormMessage>{fieldState.error?.message}</FormMessage>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            name="password"
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <FormLabel htmlFor="password">Password</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    id="password"
+                    placeholder="••••••••"
+                    {...field}
+                    className="bg-white/10 border-white/20 text-white"
+                  />
+                </FormControl>
+                <FormMessage>{fieldState.error?.message}</FormMessage>
+              </FormItem>
+            )}
+          />
+          <Button
+            type="submit"
+            disabled={mutation.isPending}
+            className="mt-4 bg-white/20 hover:bg-white/30"
+          >
+            {mutation.isPending ? "Loading..." : "Login"}
+          </Button>
+        </Form>
+      </FormProviderWrapper>
+
       <div className="absolute w-[300px] h-[300px] bg-white/20 rounded-full blur-3xl bottom-1/6 left-1/4 animate-pulse"></div>
       <div className="absolute w-[300px] h-[300px] bg-pink-400/30 rounded-full blur-3xl top-1/6 right-1/4 animate-pulse"></div>
     </div>

@@ -13,21 +13,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
+import { ServiceItemType } from "@/app/schemas/services.schema";
 
 interface EditServiceDialogProps {
   trigger: React.ReactNode;
-  service: {
-    id: string;
-    title: string;
-    desc: string;
-    color: string;
-  };
-  onUpdate: (service: {
-    id: string;
-    title: string;
-    desc: string;
-    color: string;
-  }) => Promise<unknown> | void;
+  service: ServiceItemType;
+  onUpdate: (service: ServiceItemType) => Promise<unknown> | void;
 }
 
 export default function EditService({

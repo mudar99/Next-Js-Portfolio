@@ -13,13 +13,7 @@ import { AxiosError } from "axios";
 import { ApiResponse } from "@/types/api";
 import AddService from "./actions/AddService";
 import EditService from "./actions/EditService";
-
-interface Service {
-  id: string;
-  title: string;
-  desc: string;
-  color: string;
-}
+import { ServiceItemType, ServicesType } from "@/app/schemas/services.schema";
 
 export default function ServicePage() {
   const queryClient = useQueryClient();
@@ -43,7 +37,7 @@ export default function ServicePage() {
   });
 
   const editService = useMutation({
-    mutationFn: async (service: Service) => {
+    mutationFn: async (service: ServiceItemType) => {
       return await axiosInstance.put(`/services/${service.id}`, service);
     },
     onSuccess: () => {
@@ -79,8 +73,8 @@ export default function ServicePage() {
   });
 
   const addService = useMutation({
-    mutationFn: async (e: { title: string; desc: string; color: string }) => {
-      return await axiosInstance.post(`/service`, e);
+    mutationFn: async (payload: Omit<ServiceItemType, "id">) => {
+      return await axiosInstance.post(`/service`, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["services"] });
@@ -96,11 +90,10 @@ export default function ServicePage() {
     },
   });
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<ServicesType>({
     queryKey: ["services"],
     queryFn: async () => {
       const { data } = await axiosInstance.get("/services");
-      console.log(data);
       return data.data;
     },
     refetchOnWindowFocus: false,
@@ -118,7 +111,7 @@ export default function ServicePage() {
           </h2>
 
           <EditSummary
-            summary={data?.servicesSummary}
+            servicesSummary={data?.servicesSummary ?? ""}
             trigger={
               <Button
                 variant="ghost"
@@ -142,7 +135,7 @@ export default function ServicePage() {
             item: { id: string; title: string; color: string; desc: string },
             index: number
           ) => (
-            <Card key={index} className="rounded-3xl border p-8">
+            <Card key={index} className="rounded-3xl border p-8 break-all">
               <div className="flex justify-between items-center">
                 <h2
                   className="text-2xl font-bold mb-3 "
