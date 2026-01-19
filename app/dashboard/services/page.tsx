@@ -13,13 +13,17 @@ import { AxiosError } from "axios";
 import { ApiResponse } from "@/types/api";
 import AddService from "./actions/AddService";
 import EditService from "./actions/EditService";
-import { ServiceItemType, ServicesType } from "@/app/schemas/services.schema";
+import {
+  ServiceItemType,
+  servicesSchema,
+  ServicesType,
+} from "@/app/schemas/services.schema";
 
 export default function ServicePage() {
   const queryClient = useQueryClient();
 
   const deleteService = useMutation({
-    mutationFn: async (serviceId: string) => {
+    mutationFn: async (serviceId?: number) => {
       return await axiosInstance.delete(`/services/${serviceId}`);
     },
     onSuccess: () => {
@@ -94,7 +98,12 @@ export default function ServicePage() {
     queryKey: ["services"],
     queryFn: async () => {
       const { data } = await axiosInstance.get("/services");
-      return data.data;
+      const parsed = servicesSchema.safeParse(data.data);
+      if (!parsed.success) {
+        console.error("❌ API returned invalid about object", parsed.error);
+        throw new Error("Invalid services data received from server");
+      }
+      return parsed.data;
     },
     refetchOnWindowFocus: false,
   });
@@ -132,7 +141,7 @@ export default function ServicePage() {
       <section className="my-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {data?.services.map(
           (
-            item: { id: string; title: string; color: string; desc: string },
+            item: { id?: number; title: string; color: string; desc: string },
             index: number
           ) => (
             <Card key={index} className="rounded-3xl border p-8 break-all">

@@ -16,7 +16,7 @@ export const heroSchema = z.object({
     .array(
       z.object({
         title: z.string().min(1),
-        value: z.string().min(1).max(3),
+        value: z.number().min(1).max(999),
       })
     )
     .min(2)

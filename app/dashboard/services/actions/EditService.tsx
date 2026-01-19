@@ -11,9 +11,22 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
-import { Label } from "@/components/ui/label";
-import { ServiceItemType } from "@/app/schemas/services.schema";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import {
+  serviceItemSchema,
+  ServiceItemType,
+} from "@/app/schemas/services.schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormProviderWrapper,
+} from "@/components/ui/form";
 
 interface EditServiceDialogProps {
   trigger: React.ReactNode;
@@ -28,11 +41,21 @@ export default function EditService({
 }: EditServiceDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState(service);
 
-  const handleSubmit = async () => {
+  const methods = useForm<ServiceItemType>({
+    resolver: zodResolver(serviceItemSchema),
+    defaultValues: service,
+  });
+
+  useEffect(() => {
+    if (open) {
+      methods.reset(service);
+    }
+  }, [open, service, methods]);
+
+  const onSubmit = async (data: ServiceItemType) => {
     setLoading(true);
-    await onUpdate(form);
+    await onUpdate(data);
     setLoading(false);
     setOpen(false);
   };
@@ -42,50 +65,84 @@ export default function EditService({
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
       <DialogContent className="rounded-2xl bg-card border border-white/10">
-        <DialogHeader>
-          <DialogTitle>Edit Service</DialogTitle>
-        </DialogHeader>
+        <FormProviderWrapper methods={methods}>
+          <Form onSubmit={methods.handleSubmit(onSubmit)}>
+            <DialogHeader>
+              <DialogTitle>Edit Service</DialogTitle>
+            </DialogHeader>
 
-        <div className="space-y-4 mt-4">
-          <div className="grid gap-2">
-            <Label htmlFor="serviceTitle">Service title</Label>
-            <Input
-              required
-              id="serviceTitle"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="serviceDescription">Service description</Label>
-            <Textarea
-              required
-              id="serviceDescription"
-              value={form.desc}
-              onChange={(e) => setForm({ ...form, desc: e.target.value })}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="cardColor">Card Color</Label>
-            <Input
-              required
-              type="color"
-              id="cardColor"
-              value={form.color}
-              onChange={(e) => setForm({ ...form, color: e.target.value })}
-            />
-          </div>
-        </div>
+            <div className="space-y-4 mt-4">
+              <div className="grid gap-2">
+                <FormLabel htmlFor="serviceTitle">Service title</FormLabel>
+                <FormField
+                  name="title"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          id="serviceTitle"
+                          placeholder="Service title"
+                        />
+                      </FormControl>
+                      <FormMessage>{fieldState.error?.message}</FormMessage>
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
-          </Button>
+              <div className="grid gap-2">
+                <FormLabel htmlFor="serviceDescription">
+                  Service description
+                </FormLabel>
+                <FormField
+                  name="desc"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          id="serviceDescription"
+                          placeholder="Service description"
+                        />
+                      </FormControl>
+                      <FormMessage>{fieldState.error?.message}</FormMessage>
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Saving..." : "Save Changes"}
-          </Button>
-        </DialogFooter>
+              <div className="grid gap-2">
+                <FormLabel htmlFor="cardColor">Card Color</FormLabel>
+                <FormField
+                  name="color"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input type="color" {...field} id="cardColor" />
+                      </FormControl>
+                      <FormMessage>{fieldState.error?.message}</FormMessage>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
+                Cancel
+              </Button>
+
+              <Button type="submit" disabled={loading}>
+                {loading ? "Saving..." : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </Form>
+        </FormProviderWrapper>
       </DialogContent>
     </Dialog>
   );

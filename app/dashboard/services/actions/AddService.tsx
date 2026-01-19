@@ -10,101 +10,136 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import {
+  serviceItemSchema,
+  ServiceItemType,
+} from "@/app/schemas/services.schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormProviderWrapper,
+} from "@/components/ui/form";
 
 interface AddServiceDialogProps {
   trigger: React.ReactNode;
-  onAdd: (service: {
-    title: string;
-    desc: string;
-    color: string;
-  }) => Promise<unknown> | void;
+  onAdd: (service: ServiceItemType) => Promise<unknown> | void;
 }
 
 export default function AddService({ trigger, onAdd }: AddServiceDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const [service, setService] = useState({
-    title: "",
-    desc: "",
-    color: "#FFD700",
+  const methods = useForm<ServiceItemType>({
+    resolver: zodResolver(serviceItemSchema),
+    defaultValues: {
+      title: "",
+      desc: "",
+      color: "#000000",
+    },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // needed to avoid page reload
-
+  const onSubmit = async (service: ServiceItemType) => {
+    console.log(service);
     setLoading(true);
     await onAdd(service);
     setLoading(false);
     setOpen(false);
   };
+  console.log(methods.formState.errors);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
       <DialogContent className="rounded-2xl bg-card border border-white/10">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Add Service</DialogTitle>
-          </DialogHeader>
+        <FormProviderWrapper methods={methods}>
+          <Form onSubmit={methods.handleSubmit(onSubmit)}>
+            <DialogHeader>
+              <DialogTitle>Add Service</DialogTitle>
+            </DialogHeader>
 
-          <div className="space-y-4 mt-4">
-            <div className="grid gap-2">
-              <Label htmlFor="serviceTitle">Service title</Label>
-              <Input
-                required
-                id="serviceTitle"
-                value={service.title}
-                onChange={(e) =>
-                  setService({ ...service, title: e.target.value })
-                }
-              />
+            <div className="space-y-4 my-4">
+              <div className="grid gap-2">
+                <FormLabel htmlFor="serviceTitle">Service title</FormLabel>
+                <FormField
+                  name="title"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Service title"
+                          id="serviceTitle"
+                        />
+                      </FormControl>
+                      <FormMessage>{fieldState.error?.message}</FormMessage>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <FormLabel htmlFor="description">Description</FormLabel>
+                <FormField
+                  name="desc"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Description"
+                          id="description"
+                        />
+                      </FormControl>
+                      <FormMessage>{fieldState.error?.message}</FormMessage>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <FormLabel htmlFor="cardColor">Card Color</FormLabel>
+                <FormField
+                  name="color"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input
+                          type="color"
+                          {...field}
+                          id="cardColor"
+                          placeholder="Card Color"
+                        />
+                      </FormControl>
+                      <FormMessage>{fieldState.error?.message}</FormMessage>
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                required
-                id="description"
-                value={service.desc}
-                onChange={(e) =>
-                  setService({ ...service, desc: e.target.value })
-                }
-              />
-            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
+                Cancel
+              </Button>
 
-            <div className="grid gap-2">
-              <Label htmlFor="cardColor">Card Color</Label>
-              <Input
-                type="color"
-                required
-                id="cardColor"
-                value={service.color}
-                onChange={(e) =>
-                  setService({ ...service, color: e.target.value })
-                }
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </Button>
-
-            <Button type="submit" disabled={loading}>
-              {loading ? "Adding..." : "Add Service"}
-            </Button>
-          </DialogFooter>
-        </form>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Adding..." : "Add Service"}
+              </Button>
+            </DialogFooter>
+          </Form>
+        </FormProviderWrapper>
       </DialogContent>
     </Dialog>
   );

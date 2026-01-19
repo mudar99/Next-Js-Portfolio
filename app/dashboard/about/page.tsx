@@ -17,6 +17,7 @@ import { AxiosError } from "axios";
 import { ApiResponse } from "@/types/api";
 import { objectToFormData } from "@/app/utils/objectToForm";
 import { validateOrThrow } from "@/app/utils/validateOrThrow";
+import { isoToHumanDate } from "@/app/utils/date.utils";
 
 export default function AboutPage() {
   const queryClient = useQueryClient();
@@ -108,7 +109,7 @@ export default function AboutPage() {
       icon: FaBirthdayCake,
       color: "#a855f7",
       title: "Date of birth:",
-      value: data?.birthdate.toLocaleDateString("en-GB"),
+      value: isoToHumanDate(data?.birthdate),
     },
     {
       icon: FaMedal,

@@ -285,7 +285,14 @@ export default function EditHeroDialog({ data }: Props) {
                     render={({ field, fieldState }) => (
                       <FormItem className="flex-1">
                         <FormControl>
-                          <Input type="number" {...field} placeholder="Value" />
+                          <Input
+                            type="number"
+                            placeholder="Value"
+                            value={field.value ?? ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.valueAsNumber)
+                            }
+                          />
                         </FormControl>
                         <FormMessage>{fieldState.error?.message}</FormMessage>
                       </FormItem>
@@ -308,7 +315,7 @@ export default function EditHeroDialog({ data }: Props) {
                 variant="outline"
                 disabled={stats.fields.length >= 4}
                 size="icon"
-                onClick={() => stats.append({ title: "", value: "0" })}
+                onClick={() => stats.append({ title: "", value: 0 })}
               >
                 <Plus />
               </Button>

@@ -10,8 +10,22 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
-import { Label } from "@/components/ui/label";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import {
+  servicesSummarySchema,
+  ServicesSummaryType,
+} from "@/app/schemas/services.schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormProviderWrapper,
+} from "@/components/ui/form";
 
 interface EditSummaryDialogProps {
   trigger: React.ReactNode;
@@ -27,11 +41,22 @@ export default function EditSummary({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const [text, setText] = useState(servicesSummary);
+  const methods = useForm<ServicesSummaryType>({
+    resolver: zodResolver(servicesSummarySchema),
+    defaultValues: {
+      servicesSummary,
+    },
+  });
 
-  const handleSubmit = async () => {
+  useEffect(() => {
+    if (open) {
+      methods.reset({ servicesSummary });
+    }
+  }, [open, servicesSummary, methods]);
+
+  const onSubmit = async (data: ServicesSummaryType) => {
     setLoading(true);
-    await onUpdate(text);
+    await onUpdate(data.servicesSummary);
     setLoading(false);
     setOpen(false);
   };
@@ -41,27 +66,49 @@ export default function EditSummary({
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
       <DialogContent className="rounded-2xl bg-card border border-white/10">
-        <DialogHeader>
-          <DialogTitle>Edit Summary</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-2">
-          <Label htmlFor="serviceDescription">Service description</Label>
-          <Textarea
-            required
-            id="serviceDescription"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-        </div>
-        <DialogFooter className="pt-4">
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
-          </Button>
+        <FormProviderWrapper methods={methods}>
+          <Form onSubmit={methods.handleSubmit(onSubmit)}>
+            <DialogHeader>
+              <DialogTitle>Edit Summary</DialogTitle>
+            </DialogHeader>
 
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Updating..." : "Save"}
-          </Button>
-        </DialogFooter>
+            <div className="grid gap-2 mt-4">
+              <FormLabel htmlFor="servicesSummary">
+                Service description
+              </FormLabel>
+
+              <FormField
+                name="servicesSummary"
+                render={({ field, fieldState }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        id="servicesSummary"
+                        placeholder="Write services summary..."
+                      />
+                    </FormControl>
+                    <FormMessage>{fieldState.error?.message}</FormMessage>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <DialogFooter className="pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
+                Cancel
+              </Button>
+
+              <Button type="submit" disabled={loading}>
+                {loading ? "Updating..." : "Save"}
+              </Button>
+            </DialogFooter>
+          </Form>
+        </FormProviderWrapper>
       </DialogContent>
     </Dialog>
   );
